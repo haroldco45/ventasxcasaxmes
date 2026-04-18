@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ventas x Casa x Mes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --azul:#0f2744;--azul2:#1a3a5c;--oro:#f0a500;--verde:#00c853;--rojo:#e53935;
+  --fondo:#f0f4f8;--blanco:#fff;--gris:#e8edf2;--texto:#1a2533;--sub:#6b7a8d;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;font-size:14px}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,var(--azul) 0%,var(--azul2) 100%);color:#fff;padding:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.header h1{font-size:16px;font-weight:700;letter-spacing:.3px}
+.header-sub{font-size:11px;opacity:.7;margin-top:2px}
+.upload-btn{background:var(--oro);color:#fff;border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.upload-btn:active{opacity:.8}
+#fileInput{display:none}
+
+/* FILTROS */
+.filtros{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.filtros::-webkit-scrollbar{display:none}
+.filt-group{display:flex;flex-direction:column;gap:3px;min-width:120px}
+.filt-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
+.filt-select{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 8px;border-radius:8px;font-size:12px;min-width:110px;-webkit-appearance:none}
+.filt-select option{background:var(--azul2);color:#fff}
+
+/* ESTADO INICIAL */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:16px}
+.empty-icon{font-size:64px;opacity:.4}
+.empty-title{font-size:18px;font-weight:700;color:var(--azul)}
+.empty-desc{font-size:13px;color:var(--sub);max-width:260px;line-height:1.5}
+.upload-big{background:var(--azul2);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px}
+
+/* MÉTRICAS */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 0}
+.metric{background:var(--blanco);border-radius:12px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.metric.full{grid-column:1/-1}
+.metric-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin-bottom:4px}
+.metric-val{font-size:20px;font-weight:800;line-height:1}
+.metric-val.azul{color:var(--azul2)}
+.metric-val.rojo{color:var(--rojo)}
+.metric-val.verde{color:var(--verde)}
+.metric-val.oro{color:var(--oro)}
+
+/* TABS */
+.tabs{display:flex;gap:0;padding:12px 12px 0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--sub);background:transparent;border:none;transition:all .2s}
+.tab.active{background:var(--azul2);color:#fff}
+
+/* TABLA */
+.tbl-wrap{padding:10px 12px 80px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--blanco);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:12px}
+thead th{background:var(--azul2);color:#fff;padding:9px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+thead th.right{text-align:right}
+tbody tr{border-bottom:1px solid var(--gris)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:active{background:#e8f0fe}
+td{padding:8px 8px;white-space:nowrap}
+td.right{text-align:right;font-family:monospace;font-size:11px}
+td.right.rojo{color:var(--rojo);font-weight:700}
+td.right.verde{color:var(--verde);font-weight:700}
+tfoot tr{background:var(--gris);font-weight:800}
+tfoot td{padding:9px 8px;font-size:11px}
+
+/* BADGE */
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700}
+.badge.alto{background:#fde8e8;color:var(--rojo)}
+.badge.medio{background:#fff3cd;color:#856404}
+.badge.ok{background:#e8f5e9;color:#2e7d32}
+
+/* PROV MAP */
+.prov-chip{display:inline-block;background:var(--gris);color:var(--azul2);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:700}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--sub);font-size:13px}
+.spinner{width:32px;height:32px;border:3px solid var(--gris);border-top:3px solid var(--azul2);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header h1" style="font-size:15px;font-weight:800">📊 Ventas × Casa × Mes</div>
+      <div class="header-sub" id="hdr-sub">Carga tu archivo Excel</div>
+    </div>
+    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+      📂 Cargar
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="cargarArchivo(this)">
+  </div>
+  <div class="filtros" id="filtros" style="display:none">
+    <div class="filt-group">
+      <div class="filt-label">Vendedor</div>
+      <select class="filt-select" id="filt-vend" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filt-group">
+      <div class="filt-label">Proveedor</div>
+      <select class="filt-select" id="filt-nump" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div id="contenido">
+  <div class="empty-state">
+    <div class="empty-icon">📊</div>
+    <div class="empty-title">Ventas × Casa</div>
+    <div class="empty-desc">Carga tu archivo <strong>ventasxcasaxmes.xlsx</strong> para ver el informe</div>
+    <button class="upload-big" onclick="document.getElementById('fileInput').click()">
+      📂 Seleccionar archivo
+    </button>
+  </div>
+</div>
+
+<script>
+const PROV = {0:'VARIOS',1:'EMPAQUETADORA',2:'ACEITES',3:'LACTALIS',4:'LA JIRAFA',5:'FAMILIA SANCELA',6:'NUTRESA',7:'JOHNSON',8:'BRINSA',9:'CORBETA',10:'COLOMBINA',11:'PROVIDENCIA',12:'INGENIO PROV.'};
+const CEL = {'01':'3117700431','02':'3137671011','03':'3218037260','04':'3204077185','06':'3113896092','07':'3122960169','10':'3232913136','17':'3022107387','22':'3232911903','26':'3108480777','28':'3148010448','32':'3135780204'};
+
+let DATA=[], FILTRADA=[], tabActiva='nump';
+
+function fmt(n){return Math.round(n||0).toLocaleString('es-CO');}
+function fmtK(n){
+  n=Math.round(n||0);
+  if(Math.abs(n)>=1000000) return '$'+(n/1000000).toFixed(1)+'M';
+  if(Math.abs(n)>=1000) return '$'+(n/1000).toFixed(0)+'K';
+  return '$'+n.toLocaleString('es-CO');
+}
+function pctColor(p){return p>5?'alto':p>2?'medio':'ok';}
+
+function cargarArchivo(input){
+  const file=input.files[0]; if(!file) return;
+  document.getElementById('contenido').innerHTML='<div class="loading"><div class="spinner"></div>Procesando...</div>';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      // Buscar hoja con datos (preferir 'ventasxcasaxmes')
+      let sheetName = wb.SheetNames.find(s=>s.toLowerCase().includes('ventas'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:0});
+      // Normalizar columnas
+      DATA=raw.map(r=>({
+        numprovee: Number(r.numprovee||r.NUMPROVEE||0),
+        vendedor:  String(r.vendedor||r.VENDEDOR||'').trim(),
+        ventas:    Number(r.ventas_brutas||r.ventas||0),
+        devol:     Number(r.devoluciones||r.devol||0),
+        netas:     Number(r.ventas_netas||r.netas||0)
+      })).filter(r=>r.vendedor!==''&&r.vendedor!=='vendedor');
+      document.getElementById('hdr-sub').textContent=`${file.name} · ${DATA.length} registros`;
+      poblarFiltros();
+      aplicarFiltros();
+      document.getElementById('filtros').style.display='flex';
+    }catch(err){
+      document.getElementById('contenido').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Error al leer</div><div class="empty-desc">${err.message}</div></div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function poblarFiltros(){
+  const vends=[...new Set(DATA.map(d=>d.vendedor))].sort((a,b)=>Number(a)-Number(b));
+  const numps=[...new Set(DATA.map(d=>d.numprovee))].sort((a,b)=>a-b);
+  document.getElementById('filt-vend').innerHTML='<option value="">Todos</option>'+vends.map(v=>`<option value="${v}">${v}</option>`).join('');
+  document.getElementById('filt-nump').innerHTML='<option value="">Todos</option>'+numps.map(n=>`<option value="${n}">${n} - ${PROV[n]||'?'}</option>`).join('');
+}
+
+function aplicarFiltros(){
+  const v=document.getElementById('filt-vend').value;
+  const n=document.getElementById('filt-nump').value;
+  FILTRADA=DATA.filter(d=>{
+    const mv=!v||d.vendedor===v;
+    const mn=n===''||d.numprovee===Number(n);
+    return mv&&mn;
+  });
+  renderTodo();
+}
+
+function renderTodo(){
+  const tb=FILTRADA.reduce((a,d)=>a+d.ventas,0);
+  const td=FILTRADA.reduce((a,d)=>a+d.devol,0);
+  const tn=tb-td;
+  const pct=tb>0?td/tb*100:0;
+  const html=`
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Ventas brutas</div><div class="metric-val azul">${fmtK(tb)}</div></div>
+    <div class="metric"><div class="metric-label">Devoluciones</div><div class="metric-val rojo">-${fmtK(td)}</div></div>
+    <div class="metric full"><div class="metric-label">Ventas netas</div><div class="metric-val verde">${fmtK(tn)}<span style="font-size:13px;font-weight:400;color:var(--sub);margin-left:8px">${pct.toFixed(2)}% dev.</span></div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab ${tabActiva==='nump'?'active':''}" onclick="setTab('nump')">Por proveedor</button>
+    <button class="tab ${tabActiva==='vend'?'active':''}" onclick="setTab('vend')">Por vendedor</button>
+    <button class="tab ${tabActiva==='detalle'?'active':''}" onclick="setTab('detalle')">Detalle</button>
+  </div>
+  <div class="tbl-wrap" id="tabla-wrap"></div>`;
+  document.getElementById('contenido').innerHTML=html;
+  renderTabla();
+}
+
+function setTab(t){tabActiva=t;renderTodo();}
+
+function renderTabla(){
+  const wrap=document.getElementById('tabla-wrap');
+  if(!FILTRADA.length){wrap.innerHTML='<div class="loading">Sin datos para los filtros seleccionados</div>';return;}
+
+  if(tabActiva==='nump'){
+    // Agrupar por numprovee
+    const mapa={};
+    FILTRADA.forEach(d=>{
+      if(!mapa[d.numprovee]) mapa[d.numprovee]={numprovee:d.numprovee,ventas:0,devol:0,netas:0,rows:0};
+      mapa[d.numprovee].ventas+=d.ventas; mapa[d.numprovee].devol+=d.devol;
+      mapa[d.numprovee].netas+=d.netas; mapa[d.numprovee].rows++;
+    });
+    const rows=Object.values(mapa).sort((a,b)=>b.ventas-a.ventas);
+    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    wrap.innerHTML=`<table>
+      <thead><tr><th>Proveedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
+      <tbody>${rows.map(r=>{
+        const p=r.ventas>0?r.devol/r.ventas*100:0;
+        return `<tr>
+          <td><div style="font-weight:700;font-size:11px">${PROV[r.numprovee]||'?'}</div><div style="font-size:10px;color:var(--sub)">Nump: ${r.numprovee}</div></td>
+          <td class="right">${fmtK(r.ventas)}</td>
+          <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
+          <td class="right verde">${fmtK(r.netas)}</td>
+          <td class="right"><span class="badge ${pctColor(p)}">${p.toFixed(1)}%</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td>TOTAL</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td><td class="right">${totV>0?(totD/totV*100).toFixed(1):0}%</td></tr></tfoot>
+    </table>`;
+
+  } else if(tabActiva==='vend'){
+    const mapa={};
+    FILTRADA.forEach(d=>{
+      if(!mapa[d.vendedor]) mapa[d.vendedor]={vendedor:d.vendedor,ventas:0,devol:0,netas:0};
+      mapa[d.vendedor].ventas+=d.ventas; mapa[d.vendedor].devol+=d.devol; mapa[d.vendedor].netas+=d.netas;
+    });
+    const rows=Object.values(mapa).sort((a,b)=>b.ventas-a.ventas);
+    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    wrap.innerHTML=`<table>
+      <thead><tr><th>Vendedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
+      <tbody>${rows.map(r=>{
+        const p=r.ventas>0?r.devol/r.ventas*100:0;
+        const cel=CEL[r.vendedor.padStart(2,'0')]||CEL[r.vendedor]||'';
+        const vKey=r.vendedor.padStart(2,'0');
+        const msg=`Hola! Reporte ventas:\nVentas: $${fmt(r.ventas)}\nDevoluciones: -$${fmt(r.devol)}\nVentas netas: $${fmt(r.netas)}\n% Dev: ${p.toFixed(2)}%`;
+        const waUrl=cel?`https://wa.me/57${cel}?text=${encodeURIComponent(msg)}`:'';
+        return `<tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:800;font-size:14px">${r.vendedor}</span>
+              ${cel?`<a href="${waUrl}" target="_blank" style="background:#25D366;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;flex-shrink:0">💬</a>`:''}
+            </div>
+            ${cel?`<div style="font-size:10px;color:var(--sub)">${cel}</div>`:''}
+          </td>
+          <td class="right">${fmtK(r.ventas)}</td>
+          <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
+          <td class="right verde">${fmtK(r.netas)}</td>
+          <td class="right"><span class="badge ${pctColor(p)}">${p.toFixed(1)}%</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr><td>TOTAL</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td><td class="right">${totV>0?(totD/totV*100).toFixed(1):0}%</td></tr></tfoot>
+    </table>`;
+
+  } else {
+    // Detalle completo
+    const rows=[...FILTRADA].sort((a,b)=>b.ventas-a.ventas);
+    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    wrap.innerHTML=`<table>
+      <thead><tr><th>Vend.</th><th>Proveedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th></tr></thead>
+      <tbody>${rows.map(r=>{
+        const cel=CEL[r.vendedor.padStart(2,'0')]||CEL[r.vendedor]||'';
+        return `<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-weight:800;font-size:13px">${r.vendedor}</span>
+            ${cel?`<a href="https://wa.me/57${cel}" target="_blank" style="background:#25D366;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;text-decoration:none">💬</a>`:''}
+          </div>
+        </td>
+        <td><div style="font-size:11px;font-weight:600">${PROV[r.numprovee]||'?'}</div><div style="font-size:10px;color:var(--sub)">${r.numprovee}</div></td>
+        <td class="right">${fmtK(r.ventas)}</td>
+        <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
+        <td class="right verde">${fmtK(r.netas)}</td>
+      </tr>`;}).join('')}</tbody>
+      <tfoot><tr><td colspan="2">TOTAL (${rows.length})</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td></tr></tfoot>
+    </table>`;
+  }
+}
+</script>
+</body>
+</html>
