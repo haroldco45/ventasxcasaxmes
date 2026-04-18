@@ -2,299 +2,499 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Ventas x Casa x Mes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ventas × Casa × Mes — Distrileco</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --azul:#0f2744;--azul2:#1a3a5c;--oro:#f0a500;--verde:#00c853;--rojo:#e53935;
-  --fondo:#f0f4f8;--blanco:#fff;--gris:#e8edf2;--texto:#1a2533;--sub:#6b7a8d;
+  --az:#0f2744;--az2:#1a3a5c;--az3:#2c5f8a;--oro:#f0a500;--verde:#00b248;
+  --rojo:#e53935;--fondo:#edf1f7;--blanco:#fff;--gris:#dde3ec;--sub:#7b8a9a;
+  --texto:#1a2533;--sombra:0 2px 12px rgba(0,0,0,.10);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;font-size:14px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh}
 
-/* HEADER */
-.header{background:linear-gradient(135deg,var(--azul) 0%,var(--azul2) 100%);color:#fff;padding:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
-.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.header h1{font-size:16px;font-weight:700;letter-spacing:.3px}
-.header-sub{font-size:11px;opacity:.7;margin-top:2px}
-.upload-btn{background:var(--oro);color:#fff;border:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.upload-btn:active{opacity:.8}
-#fileInput{display:none}
+/* ── TOPBAR ── */
+.topbar{background:linear-gradient(135deg,var(--az) 0%,var(--az2) 100%);color:#fff;padding:12px 14px;position:sticky;top:0;z-index:200;box-shadow:0 3px 14px rgba(0,0,0,.25)}
+.topbar-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.app-title{font-size:15px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:7px}
+.topbar-btns{display:flex;gap:6px}
+.tbtn{border:none;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;padding:6px 11px;display:flex;align-items:center;gap:4px;transition:opacity .15s}
+.tbtn:active{opacity:.75}
+.tbtn-gold{background:var(--oro);color:#fff}
+.tbtn-green{background:var(--verde);color:#fff}
+.tbtn-gray{background:rgba(255,255,255,.18);color:#fff}
 
-/* FILTROS */
-.filtros{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
-.filtros::-webkit-scrollbar{display:none}
-.filt-group{display:flex;flex-direction:column;gap:3px;min-width:120px}
-.filt-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
-.filt-select{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 8px;border-radius:8px;font-size:12px;min-width:110px;-webkit-appearance:none}
-.filt-select option{background:var(--azul2);color:#fff}
+/* filtros header */
+.hdr-filtros{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.fgrp{display:flex;flex-direction:column;gap:2px;flex:1;min-width:110px}
+.flabel{font-size:9px;text-transform:uppercase;letter-spacing:.6px;opacity:.65}
+.fsel{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 8px;border-radius:8px;font-size:12px;width:100%;-webkit-appearance:none;appearance:none}
+.fsel option{background:var(--az2);color:#fff}
 
-/* ESTADO INICIAL */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;gap:16px}
-.empty-icon{font-size:64px;opacity:.4}
-.empty-title{font-size:18px;font-weight:700;color:var(--azul)}
-.empty-desc{font-size:13px;color:var(--sub);max-width:260px;line-height:1.5}
-.upload-big{background:var(--azul2);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px}
+/* ── MÉTRICAS ── */
+.metrics-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 12px 0}
+.met{background:var(--blanco);border-radius:12px;padding:11px 12px;box-shadow:var(--sombra)}
+.met-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin-bottom:3px}
+.met-val{font-size:17px;font-weight:900;line-height:1.1}
+.met-val.az{color:var(--az2)}.met-val.ro{color:var(--rojo)}.met-val.ve{color:var(--verde)}.met-val.or{color:var(--oro)}
 
-/* MÉTRICAS */
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 0}
-.metric{background:var(--blanco);border-radius:12px;padding:12px;box-shadow:0 1px 6px rgba(0,0,0,.07)}
-.metric.full{grid-column:1/-1}
-.metric-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);margin-bottom:4px}
-.metric-val{font-size:20px;font-weight:800;line-height:1}
-.metric-val.azul{color:var(--azul2)}
-.metric-val.rojo{color:var(--rojo)}
-.metric-val.verde{color:var(--verde)}
-.metric-val.oro{color:var(--oro)}
-
-/* TABS */
-.tabs{display:flex;gap:0;padding:12px 12px 0;overflow-x:auto;scrollbar-width:none}
+/* ── TABS ── */
+.tabs{display:flex;gap:0;padding:10px 12px 0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--sub);background:transparent;border:none;transition:all .2s}
-.tab.active{background:var(--azul2);color:#fff}
+.tab{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--sub);background:transparent;border:none}
+.tab.active{background:var(--az2);color:#fff}
 
-/* TABLA */
-.tbl-wrap{padding:10px 12px 80px;overflow-x:auto}
-table{width:100%;border-collapse:collapse;background:var(--blanco);border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.07);font-size:12px}
-thead th{background:var(--azul2);color:#fff;padding:9px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
-thead th.right{text-align:right}
-tbody tr{border-bottom:1px solid var(--gris)}
+/* ── ACCIÓN BARRA ── */
+.action-bar{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;scrollbar-width:none}
+.action-bar::-webkit-scrollbar{display:none}
+.abtn{border:none;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;padding:7px 14px;display:flex;align-items:center;gap:5px;white-space:nowrap;box-shadow:var(--sombra)}
+.abtn:active{opacity:.75}
+.abtn-wa{background:#25D366;color:#fff}
+.abtn-print{background:var(--az2);color:#fff}
+.abtn-excel{background:#217346;color:#fff}
+.abtn-info{background:var(--oro);color:#fff}
+.abtn-backup{background:#5c6bc0;color:#fff}
+
+/* ── TABLA ── */
+.tbl-wrap{padding:8px 12px 90px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--blanco);border-radius:12px;overflow:hidden;box-shadow:var(--sombra);font-size:12px}
+thead th{background:var(--az2);color:#fff;padding:9px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+th.right,td.right{text-align:right}
+tbody tr{border-bottom:1px solid var(--gris);cursor:pointer}
 tbody tr:last-child{border-bottom:none}
-tbody tr:active{background:#e8f0fe}
+tbody tr.sel{background:#e3f0ff}
+tbody tr:active{background:#d6e8ff}
 td{padding:8px 8px;white-space:nowrap}
-td.right{text-align:right;font-family:monospace;font-size:11px}
-td.right.rojo{color:var(--rojo);font-weight:700}
-td.right.verde{color:var(--verde);font-weight:700}
-tfoot tr{background:var(--gris);font-weight:800}
-tfoot td{padding:9px 8px;font-size:11px}
+.vend-chip{display:inline-flex;align-items:center;gap:5px;background:var(--az);color:#fff;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:800}
+.prov-name{font-weight:700;font-size:12px}
+.prov-num{font-size:10px;color:var(--sub)}
+tfoot tr{background:var(--gris)}
+tfoot td{padding:9px 8px;font-weight:800;font-size:11px}
 
-/* BADGE */
-.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700}
+/* badge % */
+.badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:800}
 .badge.alto{background:#fde8e8;color:var(--rojo)}
 .badge.medio{background:#fff3cd;color:#856404}
 .badge.ok{background:#e8f5e9;color:#2e7d32}
 
-/* PROV MAP */
-.prov-chip{display:inline-block;background:var(--gris);color:var(--azul2);font-size:10px;padding:2px 6px;border-radius:6px;font-weight:700}
+/* ── MODAL INFORME ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal{background:var(--blanco);border-radius:20px 20px 0 0;width:100%;max-height:90vh;overflow-y:auto;padding:20px 16px 30px}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-hdr h2{font-size:16px;font-weight:800;color:var(--az2)}
+.modal-close{background:var(--gris);border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.inf-header{background:linear-gradient(135deg,var(--az),var(--az2));color:#fff;border-radius:12px;padding:16px;margin-bottom:14px;text-align:center}
+.inf-title{font-size:18px;font-weight:900;margin-bottom:4px}
+.inf-sub{font-size:12px;opacity:.75}
+.inf-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.inf-met{background:var(--fondo);border-radius:10px;padding:10px;text-align:center}
+.inf-met-lbl{font-size:9px;text-transform:uppercase;color:var(--sub);margin-bottom:3px}
+.inf-met-val{font-size:16px;font-weight:900}
+.inf-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.inf-table th{background:var(--az2);color:#fff;padding:7px 8px;text-align:left;font-size:10px}
+.inf-table th.r,.inf-table td.r{text-align:right}
+.inf-table td{padding:7px 8px;border-bottom:1px solid var(--gris)}
+.inf-table tfoot td{background:var(--gris);font-weight:800;padding:8px}
+.inf-btns{display:flex;gap:8px;flex-wrap:wrap}
+.inf-btn{flex:1;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-width:120px}
+.inf-btn-wa{background:#25D366;color:#fff}
+.inf-btn-print{background:var(--az2);color:#fff}
 
-/* LOADING */
-.loading{text-align:center;padding:40px;color:var(--sub);font-size:13px}
-.spinner{width:32px;height:32px;border:3px solid var(--gris);border-top:3px solid var(--azul2);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ── EMPTY ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;text-align:center;gap:14px}
+.empty-ico{font-size:60px;opacity:.35}
+.empty-tit{font-size:18px;font-weight:800;color:var(--az2)}
+.empty-desc{font-size:13px;color:var(--sub);max-width:260px;line-height:1.5}
+.big-btn{background:var(--az2);color:#fff;border:none;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px}
+
+/* ── PRINT ── */
+@media print{
+  .topbar,.tabs,.action-bar,.modal-bg{display:none!important}
+  .metrics-bar{grid-template-columns:repeat(3,1fr)}
+  body{background:#fff}
+  .tbl-wrap{padding:0}
+}
+
+/* loading */
+.loading{text-align:center;padding:40px;color:var(--sub)}
+.spin{width:28px;height:28px;border:3px solid var(--gris);border-top:3px solid var(--az2);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 10px}
+@keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="header-top">
-    <div>
-      <div class="header h1" style="font-size:15px;font-weight:800">📊 Ventas × Casa × Mes</div>
-      <div class="header-sub" id="hdr-sub">Carga tu archivo Excel</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-row1">
+    <div class="app-title">📊 Ventas × Casa × Mes</div>
+    <div class="topbar-btns">
+      <button class="tbtn tbtn-gray" onclick="document.getElementById('fi').click()">📂 Cargar</button>
+      <input type="file" id="fi" accept=".xlsx,.xls" style="display:none" onchange="cargarXLSX(this)">
+      <button class="tbtn tbtn-gold" onclick="backupJSON()" id="btn-backup" style="display:none">💾</button>
     </div>
-    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-      📂 Cargar
-    </button>
-    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="cargarArchivo(this)">
   </div>
-  <div class="filtros" id="filtros" style="display:none">
-    <div class="filt-group">
-      <div class="filt-label">Vendedor</div>
-      <select class="filt-select" id="filt-vend" onchange="aplicarFiltros()">
+  <div class="hdr-filtros" id="hdr-filtros" style="display:none">
+    <div class="fgrp">
+      <div class="flabel">Vendedor</div>
+      <select class="fsel" id="fv" onchange="aplicar()">
         <option value="">Todos</option>
       </select>
     </div>
-    <div class="filt-group">
-      <div class="filt-label">Proveedor</div>
-      <select class="filt-select" id="filt-nump" onchange="aplicarFiltros()">
-        <option value="">Todos</option>
+    <div class="fgrp">
+      <div class="flabel">Casa / Proveedor</div>
+      <select class="fsel" id="fn" onchange="aplicar()">
+        <option value="">Todas</option>
       </select>
     </div>
   </div>
 </div>
 
-<div id="contenido">
-  <div class="empty-state">
-    <div class="empty-icon">📊</div>
-    <div class="empty-title">Ventas × Casa</div>
-    <div class="empty-desc">Carga tu archivo <strong>ventasxcasaxmes.xlsx</strong> para ver el informe</div>
-    <button class="upload-big" onclick="document.getElementById('fileInput').click()">
-      📂 Seleccionar archivo
-    </button>
+<!-- CONTENIDO PRINCIPAL -->
+<div id="app">
+  <div class="empty">
+    <div class="empty-ico">📊</div>
+    <div class="empty-tit">Ventas × Casa × Mes</div>
+    <div class="empty-desc">Carga tu archivo <strong>ventasxcasaxmes.xlsx</strong> para ver el informe completo</div>
+    <button class="big-btn" onclick="document.getElementById('fi').click()">📂 Seleccionar archivo Excel</button>
   </div>
+</div>
+
+<!-- MODAL INFORME -->
+<div class="modal-bg" id="modal-bg" onclick="cerrarModal(event)">
+  <div class="modal" id="modal-content"></div>
 </div>
 
 <script>
-const PROV = {0:'VARIOS',1:'EMPAQUETADORA',2:'ACEITES',3:'LACTALIS',4:'LA JIRAFA',5:'FAMILIA SANCELA',6:'NUTRESA',7:'JOHNSON',8:'BRINSA',9:'CORBETA',10:'COLOMBINA',11:'PROVIDENCIA',12:'INGENIO PROV.'};
-const CEL = {'01':'3117700431','02':'3137671011','03':'3218037260','04':'3204077185','06':'3113896092','07':'3122960169','10':'3232913136','17':'3022107387','22':'3232911903','26':'3108480777','28':'3148010448','32':'3135780204'};
+// ── CONSTANTES ──
+const PROV={0:'VARIOS',1:'EMPAQUETADORA',2:'ACEITES',3:'LACTALIS',4:'LA JIRAFA',5:'FAMILIA SANCELA',6:'NUTRESA',7:'JOHNSON AND JOHNSON',8:'BRINSA',9:'CORBETA',10:'COLOMBINA',11:'PROVIDENCIA',12:'INGENIO PROV.'};
+const CEL={'01':'3117700431','02':'3137671011','03':'3218037260','04':'3204077185','06':'3113896092','07':'3122960169','10':'3232913136','17':'3022107387','22':'3232911903','26':'3108480777','28':'3148010448','32':'3135780204'};
+const NOMBRE={'01':'HAROLD MARIN M.','02':'DANNY DE JESUS TRONCOSO','03':'ALEXANDER SANCHEZ','04':'JUAN CARLOS QUINTANA','06':'LORENZO CASTELLAR','07':'ARGENIS JOSE MEZA','10':'GLEYDIS ENAMORADO','17':'ATENCIA ARAGON R.','22':'JUAN CARLOS ZABALA','26':'REYES ALVAREZ ROY','28':'RUBEN DARIO ABENDANO','32':'JULIETH P RODRIGUEZ'};
 
-let DATA=[], FILTRADA=[], tabActiva='nump';
+let DATA=[], FILTRADA=[], tabActiva='proveedor', mesLabel='';
 
+// ── UTILS ──
 function fmt(n){return Math.round(n||0).toLocaleString('es-CO');}
 function fmtK(n){
   n=Math.round(n||0);
-  if(Math.abs(n)>=1000000) return '$'+(n/1000000).toFixed(1)+'M';
-  if(Math.abs(n)>=1000) return '$'+(n/1000).toFixed(0)+'K';
-  return '$'+n.toLocaleString('es-CO');
+  if(Math.abs(n)>=1000000)return'$'+(n/1000000).toFixed(1)+'M';
+  if(Math.abs(n)>=1000)return'$'+(n/1000).toFixed(0)+'K';
+  return'$'+fmt(n);
 }
-function pctColor(p){return p>5?'alto':p>2?'medio':'ok';}
+function pct(d,v){return v>0?d/v*100:0;}
+function badge(p){return p>5?'alto':p>2?'medio':'ok';}
+function vKey(v){return String(v).padStart(2,'0');}
+function cel(v){return CEL[vKey(v)]||'';}
+function nomV(v){return NOMBRE[vKey(v)]||'Vendedor '+v;}
 
-function cargarArchivo(input){
+// ── CARGAR XLSX ──
+function cargarXLSX(input){
   const file=input.files[0]; if(!file) return;
-  document.getElementById('contenido').innerHTML='<div class="loading"><div class="spinner"></div>Procesando...</div>';
-  const reader=new FileReader();
-  reader.onload=e=>{
+  document.getElementById('app').innerHTML='<div class="loading"><div class="spin"></div>Procesando...</div>';
+  const rd=new FileReader();
+  rd.onload=e=>{
     try{
       const wb=XLSX.read(e.target.result,{type:'array'});
-      // Buscar hoja con datos (preferir 'ventasxcasaxmes')
-      let sheetName = wb.SheetNames.find(s=>s.toLowerCase().includes('ventas'))||wb.SheetNames[0];
-      const ws=wb.Sheets[sheetName];
-      const raw=XLSX.utils.sheet_to_json(ws,{defval:0});
-      // Normalizar columnas
+      const sh=wb.SheetNames.find(s=>s.toLowerCase().includes('ventas'))||wb.SheetNames[0];
+      const raw=XLSX.utils.sheet_to_json(wb.Sheets[sh],{defval:0});
       DATA=raw.map(r=>({
-        numprovee: Number(r.numprovee||r.NUMPROVEE||0),
-        vendedor:  String(r.vendedor||r.VENDEDOR||'').trim(),
-        ventas:    Number(r.ventas_brutas||r.ventas||0),
-        devol:     Number(r.devoluciones||r.devol||0),
-        netas:     Number(r.ventas_netas||r.netas||0)
-      })).filter(r=>r.vendedor!==''&&r.vendedor!=='vendedor');
-      document.getElementById('hdr-sub').textContent=`${file.name} · ${DATA.length} registros`;
-      poblarFiltros();
-      aplicarFiltros();
-      document.getElementById('filtros').style.display='flex';
+        np:Number(r.numprovee||0),
+        vd:String(r.vendedor||'').trim(),
+        vb:Number(r.ventas_brutas||0),
+        dv:Number(r.devoluciones||0),
+        vn:Number(r.ventas_netas||0)
+      })).filter(r=>r.vd!==''&&r.vd!=='vendedor'&&!isNaN(Number(r.vd)));
+      mesLabel=file.name.replace(/\.xlsx?$/i,'');
+      document.getElementById('hdr-filtros').style.display='flex';
+      document.getElementById('btn-backup').style.display='flex';
+      poblarFiltros(); aplicar();
     }catch(err){
-      document.getElementById('contenido').innerHTML=`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Error al leer</div><div class="empty-desc">${err.message}</div></div>`;
+      document.getElementById('app').innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><div class="empty-tit">Error</div><div class="empty-desc">${err.message}</div></div>`;
     }
   };
-  reader.readAsArrayBuffer(file);
+  rd.readAsArrayBuffer(file);
 }
 
+// ── FILTROS ──
 function poblarFiltros(){
-  const vends=[...new Set(DATA.map(d=>d.vendedor))].sort((a,b)=>Number(a)-Number(b));
-  const numps=[...new Set(DATA.map(d=>d.numprovee))].sort((a,b)=>a-b);
-  document.getElementById('filt-vend').innerHTML='<option value="">Todos</option>'+vends.map(v=>`<option value="${v}">${v}</option>`).join('');
-  document.getElementById('filt-nump').innerHTML='<option value="">Todos</option>'+numps.map(n=>`<option value="${n}">${n} - ${PROV[n]||'?'}</option>`).join('');
+  const vds=[...new Set(DATA.map(d=>d.vd))].sort((a,b)=>Number(a)-Number(b));
+  const nps=[...new Set(DATA.map(d=>d.np))].sort((a,b)=>a-b);
+  document.getElementById('fv').innerHTML='<option value="">Todos</option>'+vds.map(v=>`<option value="${v}">${vKey(v)} - ${nomV(v)}</option>`).join('');
+  document.getElementById('fn').innerHTML='<option value="">Todas</option>'+nps.map(n=>`<option value="${n}">${n} - ${PROV[n]||'?'}</option>`).join('');
 }
 
-function aplicarFiltros(){
-  const v=document.getElementById('filt-vend').value;
-  const n=document.getElementById('filt-nump').value;
-  FILTRADA=DATA.filter(d=>{
-    const mv=!v||d.vendedor===v;
-    const mn=n===''||d.numprovee===Number(n);
-    return mv&&mn;
-  });
-  renderTodo();
+function aplicar(){
+  const v=document.getElementById('fv').value;
+  const n=document.getElementById('fn').value;
+  FILTRADA=DATA.filter(d=>(!v||d.vd===v)&&(n===''||d.np===Number(n)));
+  renderApp();
 }
 
-function renderTodo(){
-  const tb=FILTRADA.reduce((a,d)=>a+d.ventas,0);
-  const td=FILTRADA.reduce((a,d)=>a+d.devol,0);
+// ── RENDER PRINCIPAL ──
+function renderApp(){
+  const tb=FILTRADA.reduce((a,d)=>a+d.vb,0);
+  const td=FILTRADA.reduce((a,d)=>a+d.dv,0);
   const tn=tb-td;
-  const pct=tb>0?td/tb*100:0;
-  const html=`
-  <div class="metrics">
-    <div class="metric"><div class="metric-label">Ventas brutas</div><div class="metric-val azul">${fmtK(tb)}</div></div>
-    <div class="metric"><div class="metric-label">Devoluciones</div><div class="metric-val rojo">-${fmtK(td)}</div></div>
-    <div class="metric full"><div class="metric-label">Ventas netas</div><div class="metric-val verde">${fmtK(tn)}<span style="font-size:13px;font-weight:400;color:var(--sub);margin-left:8px">${pct.toFixed(2)}% dev.</span></div></div>
-  </div>
-  <div class="tabs">
-    <button class="tab ${tabActiva==='nump'?'active':''}" onclick="setTab('nump')">Por proveedor</button>
-    <button class="tab ${tabActiva==='vend'?'active':''}" onclick="setTab('vend')">Por vendedor</button>
-    <button class="tab ${tabActiva==='detalle'?'active':''}" onclick="setTab('detalle')">Detalle</button>
-  </div>
-  <div class="tbl-wrap" id="tabla-wrap"></div>`;
-  document.getElementById('contenido').innerHTML=html;
+  const pp=pct(td,tb);
+  document.getElementById('app').innerHTML=`
+    <div class="metrics-bar">
+      <div class="met"><div class="met-lbl">Ventas brutas</div><div class="met-val az">${fmtK(tb)}</div></div>
+      <div class="met"><div class="met-lbl">Devoluciones</div><div class="met-val ro">-${fmtK(td)}</div></div>
+      <div class="met"><div class="met-lbl">Ventas netas</div><div class="met-val ve">${fmtK(tn)}<div style="font-size:10px;font-weight:600;color:var(--sub);margin-top:2px">${pp.toFixed(2)}% dev</div></div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${tabActiva==='proveedor'?'active':''}" onclick="setTab('proveedor')">🏠 Por casa</button>
+      <button class="tab ${tabActiva==='vendedor'?'active':''}" onclick="setTab('vendedor')">👤 Por vendedor</button>
+      <button class="tab ${tabActiva==='detalle'?'active':''}" onclick="setTab('detalle')">📋 Detalle</button>
+    </div>
+    <div class="action-bar">
+      <button class="abtn abtn-wa" onclick="enviarWA()">💬 WhatsApp</button>
+      <button class="abtn abtn-info" onclick="abrirInforme()">📄 Informe</button>
+      <button class="abtn abtn-print" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="abtn abtn-excel" onclick="exportarExcel()">📊 Excel</button>
+      <button class="abtn abtn-backup" onclick="backupJSON()">💾 Backup</button>
+    </div>
+    <div class="tbl-wrap" id="tbl-wrap"></div>`;
   renderTabla();
 }
 
-function setTab(t){tabActiva=t;renderTodo();}
+function setTab(t){tabActiva=t;renderApp();}
 
+// ── TABLAS ──
 function renderTabla(){
-  const wrap=document.getElementById('tabla-wrap');
+  const wrap=document.getElementById('tbl-wrap');
   if(!FILTRADA.length){wrap.innerHTML='<div class="loading">Sin datos para los filtros seleccionados</div>';return;}
 
-  if(tabActiva==='nump'){
-    // Agrupar por numprovee
-    const mapa={};
+  if(tabActiva==='proveedor'){
+    const m={};
     FILTRADA.forEach(d=>{
-      if(!mapa[d.numprovee]) mapa[d.numprovee]={numprovee:d.numprovee,ventas:0,devol:0,netas:0,rows:0};
-      mapa[d.numprovee].ventas+=d.ventas; mapa[d.numprovee].devol+=d.devol;
-      mapa[d.numprovee].netas+=d.netas; mapa[d.numprovee].rows++;
+      if(!m[d.np])m[d.np]={np:d.np,vb:0,dv:0,vn:0};
+      m[d.np].vb+=d.vb;m[d.np].dv+=d.dv;m[d.np].vn+=d.vn;
     });
-    const rows=Object.values(mapa).sort((a,b)=>b.ventas-a.ventas);
-    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    const rows=Object.values(m).sort((a,b)=>b.vb-a.vb);
+    const tV=rows.reduce((a,r)=>a+r.vb,0),tD=rows.reduce((a,r)=>a+r.dv,0),tN=tV-tD;
     wrap.innerHTML=`<table>
-      <thead><tr><th>Proveedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
-      <tbody>${rows.map(r=>{
-        const p=r.ventas>0?r.devol/r.ventas*100:0;
-        return `<tr>
-          <td><div style="font-weight:700;font-size:11px">${PROV[r.numprovee]||'?'}</div><div style="font-size:10px;color:var(--sub)">Nump: ${r.numprovee}</div></td>
-          <td class="right">${fmtK(r.ventas)}</td>
-          <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
-          <td class="right verde">${fmtK(r.netas)}</td>
-          <td class="right"><span class="badge ${pctColor(p)}">${p.toFixed(1)}%</span></td>
-        </tr>`;
-      }).join('')}</tbody>
-      <tfoot><tr><td>TOTAL</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td><td class="right">${totV>0?(totD/totV*100).toFixed(1):0}%</td></tr></tfoot>
+      <thead><tr><th>Casa / Proveedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
+      <tbody>${rows.map(r=>{const p=pct(r.dv,r.vb);return`<tr onclick="filtrarPorCasa(${r.np})">
+        <td><div class="prov-name">${PROV[r.np]||'?'}</div><div class="prov-num">Nump: ${r.np}</div></td>
+        <td class="right" style="font-weight:700">${fmtK(r.vb)}</td>
+        <td class="right" style="color:var(--rojo)">${r.dv>0?'-'+fmtK(r.dv):'-'}</td>
+        <td class="right" style="color:var(--verde);font-weight:700">${fmtK(r.vn)}</td>
+        <td class="right"><span class="badge ${badge(p)}">${p.toFixed(1)}%</span></td>
+      </tr>`;}).join('')}</tbody>
+      <tfoot><tr><td>TOTAL (${rows.length} casas)</td><td class="right">${fmtK(tV)}</td><td class="right" style="color:var(--rojo)">-${fmtK(tD)}</td><td class="right" style="color:var(--verde)">${fmtK(tN)}</td><td class="right">${pct(tD,tV).toFixed(1)}%</td></tr></tfoot>
     </table>`;
 
-  } else if(tabActiva==='vend'){
-    const mapa={};
+  } else if(tabActiva==='vendedor'){
+    const m={};
     FILTRADA.forEach(d=>{
-      if(!mapa[d.vendedor]) mapa[d.vendedor]={vendedor:d.vendedor,ventas:0,devol:0,netas:0};
-      mapa[d.vendedor].ventas+=d.ventas; mapa[d.vendedor].devol+=d.devol; mapa[d.vendedor].netas+=d.netas;
+      if(!m[d.vd])m[d.vd]={vd:d.vd,vb:0,dv:0,vn:0,casas:0};
+      m[d.vd].vb+=d.vb;m[d.vd].dv+=d.dv;m[d.vd].vn+=d.vn;m[d.vd].casas++;
     });
-    const rows=Object.values(mapa).sort((a,b)=>b.ventas-a.ventas);
-    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    const rows=Object.values(m).sort((a,b)=>b.vb-a.vb);
+    const tV=rows.reduce((a,r)=>a+r.vb,0),tD=rows.reduce((a,r)=>a+r.dv,0),tN=tV-tD;
     wrap.innerHTML=`<table>
-      <thead><tr><th>Vendedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
+      <thead><tr><th>Vendedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th><th></th></tr></thead>
       <tbody>${rows.map(r=>{
-        const p=r.ventas>0?r.devol/r.ventas*100:0;
-        const cel=CEL[r.vendedor.padStart(2,'0')]||CEL[r.vendedor]||'';
-        const vKey=r.vendedor.padStart(2,'0');
-        const msg=`Hola! Reporte ventas:\nVentas: $${fmt(r.ventas)}\nDevoluciones: -$${fmt(r.devol)}\nVentas netas: $${fmt(r.netas)}\n% Dev: ${p.toFixed(2)}%`;
-        const waUrl=cel?`https://wa.me/57${cel}?text=${encodeURIComponent(msg)}`:'';
-        return `<tr>
+        const p=pct(r.dv,r.vb);
+        const c=cel(r.vd);
+        const msg=generarMsgVendedor(r.vd);
+        return`<tr onclick="verDetalleVendedor('${r.vd}')">
           <td>
             <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-weight:800;font-size:14px">${r.vendedor}</span>
-              ${cel?`<a href="${waUrl}" target="_blank" style="background:#25D366;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;flex-shrink:0">💬</a>`:''}
+              <span class="vend-chip">${vKey(r.vd)}</span>
+              <div>
+                <div style="font-weight:700;font-size:12px">${nomV(r.vd)}</div>
+                ${c?`<div style="font-size:10px;color:var(--sub)">${c}</div>`:''}
+              </div>
             </div>
-            ${cel?`<div style="font-size:10px;color:var(--sub)">${cel}</div>`:''}
           </td>
-          <td class="right">${fmtK(r.ventas)}</td>
-          <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
-          <td class="right verde">${fmtK(r.netas)}</td>
-          <td class="right"><span class="badge ${pctColor(p)}">${p.toFixed(1)}%</span></td>
+          <td class="right" style="font-weight:700">${fmtK(r.vb)}</td>
+          <td class="right" style="color:var(--rojo)">${r.dv>0?'-'+fmtK(r.dv):'-'}</td>
+          <td class="right" style="color:var(--verde);font-weight:700">${fmtK(r.vn)}</td>
+          <td class="right"><span class="badge ${badge(p)}">${p.toFixed(1)}%</span></td>
+          <td>${c?`<a href="https://wa.me/57${c}?text=${encodeURIComponent(msg)}" target="_blank" onclick="event.stopPropagation()" style="background:#25D366;color:#fff;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none">💬</a>`:''}</td>
         </tr>`;
       }).join('')}</tbody>
-      <tfoot><tr><td>TOTAL</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td><td class="right">${totV>0?(totD/totV*100).toFixed(1):0}%</td></tr></tfoot>
+      <tfoot><tr><td>TOTAL (${rows.length} vendedores)</td><td class="right">${fmtK(tV)}</td><td class="right" style="color:var(--rojo)">-${fmtK(tD)}</td><td class="right" style="color:var(--verde)">${fmtK(tN)}</td><td class="right">${pct(tD,tV).toFixed(1)}%</td><td></td></tr></tfoot>
     </table>`;
 
   } else {
-    // Detalle completo
-    const rows=[...FILTRADA].sort((a,b)=>b.ventas-a.ventas);
-    const totV=rows.reduce((a,r)=>a+r.ventas,0),totD=rows.reduce((a,r)=>a+r.devol,0),totN=totV-totD;
+    // DETALLE
+    const rows=[...FILTRADA].sort((a,b)=>b.vb-a.vb);
+    const tV=rows.reduce((a,r)=>a+r.vb,0),tD=rows.reduce((a,r)=>a+r.dv,0),tN=tV-tD;
     wrap.innerHTML=`<table>
-      <thead><tr><th>Vend.</th><th>Proveedor</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th></tr></thead>
-      <tbody>${rows.map(r=>{
-        const cel=CEL[r.vendedor.padStart(2,'0')]||CEL[r.vendedor]||'';
-        return `<tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:5px">
-            <span style="font-weight:800;font-size:13px">${r.vendedor}</span>
-            ${cel?`<a href="https://wa.me/57${cel}" target="_blank" style="background:#25D366;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;text-decoration:none">💬</a>`:''}
-          </div>
-        </td>
-        <td><div style="font-size:11px;font-weight:600">${PROV[r.numprovee]||'?'}</div><div style="font-size:10px;color:var(--sub)">${r.numprovee}</div></td>
-        <td class="right">${fmtK(r.ventas)}</td>
-        <td class="right rojo">${r.devol>0?'-'+fmtK(r.devol):'-'}</td>
-        <td class="right verde">${fmtK(r.netas)}</td>
+      <thead><tr><th>Vend.</th><th>Casa</th><th class="right">Ventas</th><th class="right">Dev.</th><th class="right">Netas</th><th class="right">%</th></tr></thead>
+      <tbody>${rows.map(r=>{const p=pct(r.dv,r.vb);return`<tr>
+        <td><span class="vend-chip">${vKey(r.vd)}</span></td>
+        <td><div class="prov-name" style="font-size:11px">${PROV[r.np]||'?'}</div><div class="prov-num">${r.np}</div></td>
+        <td class="right" style="font-weight:700">${fmtK(r.vb)}</td>
+        <td class="right" style="color:var(--rojo)">${r.dv>0?'-'+fmtK(r.dv):'-'}</td>
+        <td class="right" style="color:var(--verde);font-weight:700">${fmtK(r.vn)}</td>
+        <td class="right"><span class="badge ${badge(p)}">${p.toFixed(1)}%</span></td>
       </tr>`;}).join('')}</tbody>
-      <tfoot><tr><td colspan="2">TOTAL (${rows.length})</td><td class="right">${fmtK(totV)}</td><td class="right rojo">-${fmtK(totD)}</td><td class="right verde">${fmtK(totN)}</td></tr></tfoot>
+      <tfoot><tr><td colspan="2">TOTAL (${rows.length})</td><td class="right">${fmtK(tV)}</td><td class="right" style="color:var(--rojo)">-${fmtK(tD)}</td><td class="right" style="color:var(--verde)">${fmtK(tN)}</td><td class="right">${pct(tD,tV).toFixed(1)}%</td></tr></tfoot>
     </table>`;
   }
+}
+
+// ── FILTRAR POR CASA ──
+function filtrarPorCasa(np){
+  document.getElementById('fn').value=np;
+  tabActiva='vendedor';
+  aplicar();
+}
+
+// ── DETALLE VENDEDOR ──
+function verDetalleVendedor(vd){
+  document.getElementById('fv').value=vd;
+  tabActiva='proveedor';
+  aplicar();
+}
+
+// ── GENERAR MENSAJE WHATSAPP ──
+function generarMsgVendedor(vd){
+  const filas=FILTRADA.filter(d=>d.vd===vd).sort((a,b)=>b.vb-a.vb);
+  const tV=filas.reduce((a,d)=>a+d.vb,0);
+  const tD=filas.reduce((a,d)=>a+d.dv,0);
+  const tN=tV-tD;
+  const pp=pct(tD,tV);
+  let msg=`*REPORTE DE VENTAS — ${mesLabel}*\n`;
+  msg+=`Vendedor: *${vKey(vd)} - ${nomV(vd)}*\n\n`;
+  msg+=`📦 *DETALLE POR CASA:*\n`;
+  filas.forEach(d=>{
+    const p=pct(d.dv,d.vb);
+    msg+=`• ${PROV[d.np]||'?'}: $${fmt(d.vb)}`;
+    if(d.dv>0) msg+=` | Dev: -$${fmt(d.dv)}`;
+    msg+=` | *Neto: $${fmt(d.vn)}*`;
+    if(p>2) msg+=` ⚠${p.toFixed(1)}%`;
+    msg+=`\n`;
+  });
+  msg+=`\n📊 *RESUMEN:*\n`;
+  msg+=`Ventas brutas: $${fmt(tV)}\n`;
+  msg+=`Devoluciones: -$${fmt(tD)}\n`;
+  msg+=`*Ventas netas: $${fmt(tN)}*\n`;
+  msg+=`% Devolución: ${pp.toFixed(2)}%\n\n`;
+  msg+=`_Distrileco Caucasia — Vibras Positivas HM_`;
+  return msg;
+}
+
+// ── WHATSAPP GENERAL (vendedor seleccionado o todos) ──
+function enviarWA(){
+  const vd=document.getElementById('fv').value;
+  if(vd){
+    const c=cel(vd);
+    if(!c){alert('Este vendedor no tiene celular registrado');return;}
+    const msg=generarMsgVendedor(vd);
+    window.open(`https://wa.me/57${c}?text=${encodeURIComponent(msg)}`,'_blank');
+  } else {
+    // Mostrar lista de vendedores para escoger
+    const m={};
+    FILTRADA.forEach(d=>{if(!m[d.vd])m[d.vd]={vd:d.vd,vb:0};m[d.vd].vb+=d.vb;});
+    const vds=Object.values(m).sort((a,b)=>b.vb-a.vb);
+    const lista=vds.map(r=>{
+      const c=cel(r.vd);
+      const msg=generarMsgVendedor(r.vd);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gris)">
+        <div><span class="vend-chip">${vKey(r.vd)}</span> <span style="font-size:13px;font-weight:600;margin-left:6px">${nomV(r.vd)}</span><br><span style="font-size:11px;color:var(--sub)">${fmtK(r.vb)}</span></div>
+        ${c?`<a href="https://wa.me/57${c}?text=${encodeURIComponent(msg)}" target="_blank" style="background:#25D366;color:#fff;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:800;text-decoration:none">💬 Enviar</a>`:'<span style="font-size:11px;color:var(--sub)">Sin celular</span>'}
+      </div>`;
+    }).join('');
+    document.getElementById('modal-content').innerHTML=`
+      <div class="modal-hdr"><h2>💬 Enviar por WhatsApp</h2><button class="modal-close" onclick="cerrarModal2()">✕</button></div>
+      <p style="font-size:12px;color:var(--sub);margin-bottom:12px">Selecciona el vendedor al que quieres enviar el informe:</p>
+      ${lista}`;
+    document.getElementById('modal-bg').classList.add('open');
+  }
+}
+
+// ── INFORME MODAL ──
+function abrirInforme(){
+  const vd=document.getElementById('fv').value;
+  const np=document.getElementById('fn').value;
+  const tV=FILTRADA.reduce((a,d)=>a+d.vb,0);
+  const tD=FILTRADA.reduce((a,d)=>a+d.dv,0);
+  const tN=tV-tD;
+  const pp=pct(tD,tV);
+
+  let titulo=mesLabel;
+  if(vd) titulo+=` | Vendedor ${vKey(vd)} - ${nomV(vd)}`;
+  if(np!=='') titulo+=` | ${PROV[Number(np)]||'Casa '+np}`;
+
+  // Datos según tab activo
+  let filas=[], agrupado=[];
+  if(tabActiva==='proveedor'||tabActiva==='detalle'){
+    const m={};
+    FILTRADA.forEach(d=>{if(!m[d.np])m[d.np]={np:d.np,vb:0,dv:0,vn:0};m[d.np].vb+=d.vb;m[d.np].dv+=d.dv;m[d.np].vn+=d.vn;});
+    agrupado=Object.values(m).sort((a,b)=>b.vb-a.vb);
+    filas=agrupado.map(r=>{const p=pct(r.dv,r.vb);return`<tr><td>${PROV[r.np]||'?'}</td><td>${r.np}</td><td class="r">$${fmt(r.vb)}</td><td class="r" style="color:var(--rojo)">${r.dv>0?'-$'+fmt(r.dv):'-'}</td><td class="r" style="color:var(--verde);font-weight:800">$${fmt(r.vn)}</td><td class="r">${p.toFixed(1)}%</td></tr>`;}).join('');
+  } else {
+    const m={};
+    FILTRADA.forEach(d=>{if(!m[d.vd])m[d.vd]={vd:d.vd,vb:0,dv:0,vn:0};m[d.vd].vb+=d.vb;m[d.vd].dv+=d.dv;m[d.vd].vn+=d.vn;});
+    agrupado=Object.values(m).sort((a,b)=>b.vb-a.vb);
+    filas=agrupado.map(r=>{const p=pct(r.dv,r.vb);return`<tr><td>${vKey(r.vd)}</td><td>${nomV(r.vd)}</td><td class="r">$${fmt(r.vb)}</td><td class="r" style="color:var(--rojo)">${r.dv>0?'-$'+fmt(r.dv):'-'}</td><td class="r" style="color:var(--verde);font-weight:800">$${fmt(r.vn)}</td><td class="r">${p.toFixed(1)}%</td></tr>`;}).join('');
+  }
+
+  const c=vd?cel(vd):'';
+  const msg=vd?generarMsgVendedor(vd):'';
+
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-hdr"><h2>📄 Informe</h2><button class="modal-close" onclick="cerrarModal2()">✕</button></div>
+    <div class="inf-header">
+      <div class="inf-title">📊 ${mesLabel}</div>
+      <div class="inf-sub">${titulo}</div>
+    </div>
+    <div class="inf-metrics">
+      <div class="inf-met"><div class="inf-met-lbl">Ventas brutas</div><div class="inf-met-val" style="color:var(--az2)">$${fmt(tV)}</div></div>
+      <div class="inf-met"><div class="inf-met-lbl">Devoluciones</div><div class="inf-met-val" style="color:var(--rojo)">-$${fmt(tD)}</div></div>
+      <div class="inf-met"><div class="inf-met-lbl">Ventas netas</div><div class="inf-met-val" style="color:var(--verde)">$${fmt(tN)}</div></div>
+      <div class="inf-met"><div class="inf-met-lbl">% Devolución</div><div class="inf-met-val" style="color:${pp>5?'var(--rojo)':pp>2?'var(--oro)':'var(--verde)'}">${pp.toFixed(2)}%</div></div>
+    </div>
+    <table class="inf-table">
+      <thead><tr>
+        <th>${tabActiva==='vendedor'?'Cód':'Casa'}</th>
+        <th>${tabActiva==='vendedor'?'Nombre':'Nump'}</th>
+        <th class="r">Ventas</th><th class="r">Dev.</th><th class="r">Netas</th><th class="r">%</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td colspan="2">TOTAL</td><td class="r">$${fmt(tV)}</td><td class="r">-$${fmt(tD)}</td><td class="r">$${fmt(tN)}</td><td class="r">${pp.toFixed(1)}%</td></tr></tfoot>
+    </table>
+    <div class="inf-btns">
+      ${c?`<button class="inf-btn inf-btn-wa" onclick="window.open('https://wa.me/57${c}?text='+encodeURIComponent(generarMsgVendedor('${vd}')),'_blank')">💬 WhatsApp</button>`:''}
+      <button class="inf-btn inf-btn-print" onclick="window.print()">🖨️ Imprimir</button>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--sub);margin-top:14px">Desarrollada por Vibras Positivas HM — Derechos de Autor Reservados · Colombia 2026</div>`;
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+// ── MODAL CERRAR ──
+function cerrarModal(e){if(e.target===document.getElementById('modal-bg'))cerrarModal2();}
+function cerrarModal2(){document.getElementById('modal-bg').classList.remove('open');}
+
+// ── EXPORTAR EXCEL ──
+function exportarExcel(){
+  const wb=XLSX.utils.book_new();
+  // Por proveedor
+  const mp={};
+  FILTRADA.forEach(d=>{if(!mp[d.np])mp[d.np]={Casa:PROV[d.np]||'?',Numprovee:d.np,'Ventas Brutas':0,'Devoluciones':0,'Ventas Netas':0};mp[d.np]['Ventas Brutas']+=d.vb;mp[d.np]['Devoluciones']+=d.dv;mp[d.np]['Ventas Netas']+=d.vn;});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(mp).sort((a,b)=>b['Ventas Brutas']-a['Ventas Brutas'])),'Por Casa');
+  // Por vendedor
+  const mv={};
+  FILTRADA.forEach(d=>{if(!mv[d.vd])mv[d.vd]={Vendedor:vKey(d.vd),Nombre:nomV(d.vd),'Ventas Brutas':0,'Devoluciones':0,'Ventas Netas':0};mv[d.vd]['Ventas Brutas']+=d.vb;mv[d.vd]['Devoluciones']+=d.dv;mv[d.vd]['Ventas Netas']+=d.vn;});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Object.values(mv).sort((a,b)=>b['Ventas Brutas']-a['Ventas Brutas'])),'Por Vendedor');
+  // Detalle
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([...FILTRADA].sort((a,b)=>b.vb-a.vb).map(d=>({Vendedor:vKey(d.vd),Nombre:nomV(d.vd),Casa:PROV[d.np]||'?',Numprovee:d.np,'Ventas Brutas':d.vb,'Devoluciones':d.dv,'Ventas Netas':d.vn,'% Dev':pct(d.dv,d.vb).toFixed(2)+'%'}))),'Detalle');
+  XLSX.writeFile(wb,`Informe_${mesLabel}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// ── BACKUP JSON ──
+function backupJSON(){
+  const blob=new Blob([JSON.stringify({fecha:new Date().toISOString(),mes:mesLabel,data:DATA},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`backup_${mesLabel}_${Date.now()}.json`;
+  a.click();
 }
 </script>
 </body>
